@@ -1,0 +1,693 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "id": "dca6a1cb-13e4-4cd1-bc58-a8874f0ab901",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "id": "06c61208-75bc-4437-8de8-0719b95b0aed",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import re"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "id": "a83cb57f-a980-4342-a81c-f798d8abbf8b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data = {\n",
+    "    'Visitor_ID': [f'V{1000 + i}' for i in range(20)],\n",
+    "    'Name': ['MAYUR UTTAM BUCHKUL', 'ARNAV AJAY DESHPANDE.. ', 'ASHWINI LALCHAND MUNDAWARE/ ', 'GAYATRI SURESH GAIKWAD', 'HARSHADA GANESH CHAUDHARI',\n",
+    "             'VAIBHAVI HARISHWAR PATIL', np.nan, 'VISHAKHA PUNDLIK JADHAV', 'YASH BHARAT SOLUNKE/', 'VIVEK SANTOSH KHANDWE',\n",
+    "             'VISHAKHA PUNDLIK JADHAV', 'Tanushree chhanwal', 'Shruti jaiswal', 'Shriyash Sulakhe', 'YASH BHARAT SOLUNKE',\n",
+    "             np.nan, 'ARNAV AJAY DESHPANDE', 'RUTUJA SANTOSH THOTE', 'ROHIT DILIP BILWAL', 'RITESH SHIVAJI BAIRAGI'],\n",
+    "    'Age': [25, 23, 22, np.nan, 21, 25, 24, 24, 28, np.nan,\n",
+    "            22, 23, 25, 27, 25, 30, 31, 26, 19, 19],\n",
+    "    'Ticket_Price': [500, 750, 500, 1000, np.nan, 500, 700, 650, 750, 1000,\n",
+    "                      500, 800, np.nan, 750, 500, 700, 900, 850, 750, np.nan],\n",
+    "    'Check_In_Time': ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', np.nan,\n",
+    "                       '10:00 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',\n",
+    "                       '11:00 AM', '02:00 PM', np.nan, '02:30 PM', '10:00 AM',\n",
+    "                       '12:00 PM', '03:00 PM', '03:30 PM', '04:00 PM', np.nan],\n",
+    "    'City':['Delhi','Aurangabad', 'Mumbai','Bombay','New Delhi','NDL','Chennai','Chenai','Chennaai','Bangalore',\n",
+    "            'Delhi','Pune', 'New Delhi','Bombay','New Delhi','NDL','Indore','Bangalore','Ujjain','Bangalore'],\n",
+    "    'State': ['Delhi','Maharastra', 'Maharastra','Maharastra','Delhi','Delhi','Tamilnadu','Tamilnadu','Tamilnadu','Karnataka',\n",
+    "            'Delhi','Maharastra', 'Delhi','Maharastra','Delhi','Delhi','Madhya Pradesh','Karnataka','Madhya Pradesh','Karnataka']\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "id": "ba65c6a9-8334-44a3-a478-34a136b53bb5",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Visitor_ID</th>\n",
+       "      <th>Name</th>\n",
+       "      <th>Age</th>\n",
+       "      <th>Ticket_Price</th>\n",
+       "      <th>Check_In_Time</th>\n",
+       "      <th>City</th>\n",
+       "      <th>State</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>V1000</td>\n",
+       "      <td>MAYUR UTTAM BUCHKUL</td>\n",
+       "      <td>25.0</td>\n",
+       "      <td>500.0</td>\n",
+       "      <td>10:00 AM</td>\n",
+       "      <td>Delhi</td>\n",
+       "      <td>Delhi</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>V1001</td>\n",
+       "      <td>ARNAV AJAY DESHPANDE..</td>\n",
+       "      <td>23.0</td>\n",
+       "      <td>750.0</td>\n",
+       "      <td>10:30 AM</td>\n",
+       "      <td>Aurangabad</td>\n",
+       "      <td>Maharastra</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>V1002</td>\n",
+       "      <td>ASHWINI LALCHAND MUNDAWARE/</td>\n",
+       "      <td>22.0</td>\n",
+       "      <td>500.0</td>\n",
+       "      <td>11:00 AM</td>\n",
+       "      <td>Mumbai</td>\n",
+       "      <td>Maharastra</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>V1003</td>\n",
+       "      <td>GAYATRI SURESH GAIKWAD</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>1000.0</td>\n",
+       "      <td>11:30 AM</td>\n",
+       "      <td>Bombay</td>\n",
+       "      <td>Maharastra</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>V1004</td>\n",
+       "      <td>HARSHADA GANESH CHAUDHARI</td>\n",
+       "      <td>21.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>New Delhi</td>\n",
+       "      <td>Delhi</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5</th>\n",
+       "      <td>V1005</td>\n",
+       "      <td>VAIBHAVI HARISHWAR PATIL</td>\n",
+       "      <td>25.0</td>\n",
+       "      <td>500.0</td>\n",
+       "      <td>10:00 AM</td>\n",
+       "      <td>NDL</td>\n",
+       "      <td>Delhi</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>6</th>\n",
+       "      <td>V1006</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>24.0</td>\n",
+       "      <td>700.0</td>\n",
+       "      <td>12:00 PM</td>\n",
+       "      <td>Chennai</td>\n",
+       "      <td>Tamilnadu</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  Visitor_ID                          Name   Age  Ticket_Price Check_In_Time  \\\n",
+       "0      V1000           MAYUR UTTAM BUCHKUL  25.0         500.0      10:00 AM   \n",
+       "1      V1001       ARNAV AJAY DESHPANDE..   23.0         750.0      10:30 AM   \n",
+       "2      V1002  ASHWINI LALCHAND MUNDAWARE/   22.0         500.0      11:00 AM   \n",
+       "3      V1003        GAYATRI SURESH GAIKWAD   NaN        1000.0      11:30 AM   \n",
+       "4      V1004     HARSHADA GANESH CHAUDHARI  21.0           NaN           NaN   \n",
+       "5      V1005      VAIBHAVI HARISHWAR PATIL  25.0         500.0      10:00 AM   \n",
+       "6      V1006                           NaN  24.0         700.0      12:00 PM   \n",
+       "\n",
+       "         City       State  \n",
+       "0       Delhi       Delhi  \n",
+       "1  Aurangabad  Maharastra  \n",
+       "2      Mumbai  Maharastra  \n",
+       "3      Bombay  Maharastra  \n",
+       "4   New Delhi       Delhi  \n",
+       "5         NDL       Delhi  \n",
+       "6     Chennai   Tamilnadu  "
+      ]
+     },
+     "execution_count": 35,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#point2\n",
+    "dframe = pd.DataFrame(data)\n",
+    "#point4\n",
+    "dframe.head(7)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "id": "89ffefbf-0cf5-4a75-be90-790a0048ff42",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Visitor_ID</th>\n",
+       "      <th>Name</th>\n",
+       "      <th>Age</th>\n",
+       "      <th>Ticket_Price</th>\n",
+       "      <th>Check_In_Time</th>\n",
+       "      <th>City</th>\n",
+       "      <th>State</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>18</th>\n",
+       "      <td>V1018</td>\n",
+       "      <td>ROHIT DILIP BILWAL</td>\n",
+       "      <td>19.0</td>\n",
+       "      <td>750.0</td>\n",
+       "      <td>04:00 PM</td>\n",
+       "      <td>Ujjain</td>\n",
+       "      <td>Madhya Pradesh</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>19</th>\n",
+       "      <td>V1019</td>\n",
+       "      <td>RITESH SHIVAJI BAIRAGI</td>\n",
+       "      <td>19.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Bangalore</td>\n",
+       "      <td>Karnataka</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   Visitor_ID                    Name   Age  Ticket_Price Check_In_Time  \\\n",
+       "18      V1018      ROHIT DILIP BILWAL  19.0         750.0      04:00 PM   \n",
+       "19      V1019  RITESH SHIVAJI BAIRAGI  19.0           NaN           NaN   \n",
+       "\n",
+       "         City           State  \n",
+       "18     Ujjain  Madhya Pradesh  \n",
+       "19  Bangalore       Karnataka  "
+      ]
+     },
+     "execution_count": 37,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dframe.tail(2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "id": "23a5ba17-4466-4174-844b-a72205a90004",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<bound method DataFrame.info of    Visitor_ID                          Name   Age  Ticket_Price Check_In_Time  \\\n",
+       "0       V1000           MAYUR UTTAM BUCHKUL  25.0         500.0      10:00 AM   \n",
+       "1       V1001       ARNAV AJAY DESHPANDE..   23.0         750.0      10:30 AM   \n",
+       "2       V1002  ASHWINI LALCHAND MUNDAWARE/   22.0         500.0      11:00 AM   \n",
+       "3       V1003        GAYATRI SURESH GAIKWAD   NaN        1000.0      11:30 AM   \n",
+       "4       V1004     HARSHADA GANESH CHAUDHARI  21.0           NaN           NaN   \n",
+       "5       V1005      VAIBHAVI HARISHWAR PATIL  25.0         500.0      10:00 AM   \n",
+       "6       V1006                           NaN  24.0         700.0      12:00 PM   \n",
+       "7       V1007       VISHAKHA PUNDLIK JADHAV  24.0         650.0      12:30 PM   \n",
+       "8       V1008          YASH BHARAT SOLUNKE/  28.0         750.0      01:00 PM   \n",
+       "9       V1009         VIVEK SANTOSH KHANDWE   NaN        1000.0      01:30 PM   \n",
+       "10      V1010       VISHAKHA PUNDLIK JADHAV  22.0         500.0      11:00 AM   \n",
+       "11      V1011            Tanushree chhanwal  23.0         800.0      02:00 PM   \n",
+       "12      V1012                Shruti jaiswal  25.0           NaN           NaN   \n",
+       "13      V1013              Shriyash Sulakhe  27.0         750.0      02:30 PM   \n",
+       "14      V1014           YASH BHARAT SOLUNKE  25.0         500.0      10:00 AM   \n",
+       "15      V1015                           NaN  30.0         700.0      12:00 PM   \n",
+       "16      V1016          ARNAV AJAY DESHPANDE  31.0         900.0      03:00 PM   \n",
+       "17      V1017          RUTUJA SANTOSH THOTE  26.0         850.0      03:30 PM   \n",
+       "18      V1018            ROHIT DILIP BILWAL  19.0         750.0      04:00 PM   \n",
+       "19      V1019        RITESH SHIVAJI BAIRAGI  19.0           NaN           NaN   \n",
+       "\n",
+       "          City           State  \n",
+       "0        Delhi           Delhi  \n",
+       "1   Aurangabad      Maharastra  \n",
+       "2       Mumbai      Maharastra  \n",
+       "3       Bombay      Maharastra  \n",
+       "4    New Delhi           Delhi  \n",
+       "5          NDL           Delhi  \n",
+       "6      Chennai       Tamilnadu  \n",
+       "7       Chenai       Tamilnadu  \n",
+       "8     Chennaai       Tamilnadu  \n",
+       "9    Bangalore       Karnataka  \n",
+       "10       Delhi           Delhi  \n",
+       "11        Pune      Maharastra  \n",
+       "12   New Delhi           Delhi  \n",
+       "13      Bombay      Maharastra  \n",
+       "14   New Delhi           Delhi  \n",
+       "15         NDL           Delhi  \n",
+       "16      Indore  Madhya Pradesh  \n",
+       "17   Bangalore       Karnataka  \n",
+       "18      Ujjain  Madhya Pradesh  \n",
+       "19   Bangalore       Karnataka  >"
+      ]
+     },
+     "execution_count": 39,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dframe.info"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "id": "7c3b8fb2-a951-460f-b662-d88337eff2e4",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(20, 7)"
+      ]
+     },
+     "execution_count": 41,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#point 3\n",
+    "dframe.shape #size"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "id": "fadb19ce-4e33-40da-8fa5-a78d89893adf",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0              MAYUR UTTAM BUCHKUL\n",
+      "1          ARNAV AJAY DESHPANDE.. \n",
+      "2     ASHWINI LALCHAND MUNDAWARE/ \n",
+      "3           GAYATRI SURESH GAIKWAD\n",
+      "4        HARSHADA GANESH CHAUDHARI\n",
+      "5         VAIBHAVI HARISHWAR PATIL\n",
+      "6                              NaN\n",
+      "7          VISHAKHA PUNDLIK JADHAV\n",
+      "8             YASH BHARAT SOLUNKE/\n",
+      "9            VIVEK SANTOSH KHANDWE\n",
+      "10         VISHAKHA PUNDLIK JADHAV\n",
+      "11              Tanushree chhanwal\n",
+      "12                  Shruti jaiswal\n",
+      "13                Shriyash Sulakhe\n",
+      "14             YASH BHARAT SOLUNKE\n",
+      "15                             NaN\n",
+      "16            ARNAV AJAY DESHPANDE\n",
+      "17            RUTUJA SANTOSH THOTE\n",
+      "18              ROHIT DILIP BILWAL\n",
+      "19          RITESH SHIVAJI BAIRAGI\n",
+      "Name: Name, dtype: object\n"
+     ]
+    }
+   ],
+   "source": [
+    "\n",
+    "print(dframe['Name']) # particular column"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "id": "f62bb9c8-cd88-4485-8aef-cde37e0d347d",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Data type of 'Name' column: object\n"
+     ]
+    }
+   ],
+   "source": [
+    "#point 5\n",
+    "#data type of column\n",
+    "print(\"Data type of 'Name' column:\", dframe['Name'].dtype)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 47,
+   "id": "62d1e5f5-a754-4372-9946-908d70aa63de",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Data type of 'Age' column: float64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Data type of 'Age' column:\", dframe['Age'].dtype)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "id": "f9f15bbb-70da-4326-bbf4-59e7b668a7d5",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<bound method NDFrame.describe of    Visitor_ID                          Name   Age  Ticket_Price Check_In_Time  \\\n",
+       "0       V1000           MAYUR UTTAM BUCHKUL  25.0         500.0      10:00 AM   \n",
+       "1       V1001       ARNAV AJAY DESHPANDE..   23.0         750.0      10:30 AM   \n",
+       "2       V1002  ASHWINI LALCHAND MUNDAWARE/   22.0         500.0      11:00 AM   \n",
+       "3       V1003        GAYATRI SURESH GAIKWAD   NaN        1000.0      11:30 AM   \n",
+       "4       V1004     HARSHADA GANESH CHAUDHARI  21.0           NaN           NaN   \n",
+       "5       V1005      VAIBHAVI HARISHWAR PATIL  25.0         500.0      10:00 AM   \n",
+       "6       V1006                           NaN  24.0         700.0      12:00 PM   \n",
+       "7       V1007       VISHAKHA PUNDLIK JADHAV  24.0         650.0      12:30 PM   \n",
+       "8       V1008          YASH BHARAT SOLUNKE/  28.0         750.0      01:00 PM   \n",
+       "9       V1009         VIVEK SANTOSH KHANDWE   NaN        1000.0      01:30 PM   \n",
+       "10      V1010       VISHAKHA PUNDLIK JADHAV  22.0         500.0      11:00 AM   \n",
+       "11      V1011            Tanushree chhanwal  23.0         800.0      02:00 PM   \n",
+       "12      V1012                Shruti jaiswal  25.0           NaN           NaN   \n",
+       "13      V1013              Shriyash Sulakhe  27.0         750.0      02:30 PM   \n",
+       "14      V1014           YASH BHARAT SOLUNKE  25.0         500.0      10:00 AM   \n",
+       "15      V1015                           NaN  30.0         700.0      12:00 PM   \n",
+       "16      V1016          ARNAV AJAY DESHPANDE  31.0         900.0      03:00 PM   \n",
+       "17      V1017          RUTUJA SANTOSH THOTE  26.0         850.0      03:30 PM   \n",
+       "18      V1018            ROHIT DILIP BILWAL  19.0         750.0      04:00 PM   \n",
+       "19      V1019        RITESH SHIVAJI BAIRAGI  19.0           NaN           NaN   \n",
+       "\n",
+       "          City           State  \n",
+       "0        Delhi           Delhi  \n",
+       "1   Aurangabad      Maharastra  \n",
+       "2       Mumbai      Maharastra  \n",
+       "3       Bombay      Maharastra  \n",
+       "4    New Delhi           Delhi  \n",
+       "5          NDL           Delhi  \n",
+       "6      Chennai       Tamilnadu  \n",
+       "7       Chenai       Tamilnadu  \n",
+       "8     Chennaai       Tamilnadu  \n",
+       "9    Bangalore       Karnataka  \n",
+       "10       Delhi           Delhi  \n",
+       "11        Pune      Maharastra  \n",
+       "12   New Delhi           Delhi  \n",
+       "13      Bombay      Maharastra  \n",
+       "14   New Delhi           Delhi  \n",
+       "15         NDL           Delhi  \n",
+       "16      Indore  Madhya Pradesh  \n",
+       "17   Bangalore       Karnataka  \n",
+       "18      Ujjain  Madhya Pradesh  \n",
+       "19   Bangalore       Karnataka  >"
+      ]
+     },
+     "execution_count": 49,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#point 6\n",
+    "dframe.describe"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "id": "227f08c6-e286-40f7-8eef-fa2d6b963991",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "   Visitor_ID                        Name\n",
+      "0       V1000         MAYUR UTTAM BUCHKUL\n",
+      "1       V1001        ARNAV AJAY DESHPANDE\n",
+      "2       V1002  ASHWINI LALCHAND MUNDAWARE\n",
+      "3       V1003      GAYATRI SURESH GAIKWAD\n",
+      "4       V1004   HARSHADA GANESH CHAUDHARI\n",
+      "5       V1005    VAIBHAVI HARISHWAR PATIL\n",
+      "6       V1006                         NaN\n",
+      "7       V1007     VISHAKHA PUNDLIK JADHAV\n",
+      "8       V1008         YASH BHARAT SOLUNKE\n",
+      "9       V1009       VIVEK SANTOSH KHANDWE\n",
+      "10      V1010     VISHAKHA PUNDLIK JADHAV\n",
+      "11      V1011          Tanushree chhanwal\n",
+      "12      V1012              Shruti jaiswal\n",
+      "13      V1013            Shriyash Sulakhe\n",
+      "14      V1014         YASH BHARAT SOLUNKE\n",
+      "15      V1015                         NaN\n",
+      "16      V1016        ARNAV AJAY DESHPANDE\n",
+      "17      V1017        RUTUJA SANTOSH THOTE\n",
+      "18      V1018          ROHIT DILIP BILWAL\n",
+      "19      V1019      RITESH SHIVAJI BAIRAGI\n"
+     ]
+    }
+   ],
+   "source": [
+    "#point 7\n",
+    "#removing of special characters\n",
+    "def clean_name(name):\n",
+    "    \n",
+    "    if pd.isna(name):\n",
+    "        return name\n",
+    "\n",
+    "\n",
+    "    \n",
+    "    name = re.sub(r'[^a-zA-Z\\s]', '', name)  \n",
+    "    \n",
+    "#point 8    \n",
+    "    #split is used for removing blank spaces\n",
+    "    name = ' '.join(name.split())\n",
+    "    return name\n",
+    "\n",
+    "dframe['Name'] = dframe['Name'].apply(clean_name)\n",
+    "\n",
+    "print(dframe[['Visitor_ID', 'Name']])\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "id": "dcba049a-a9da-404a-b381-afa9b20035bd",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<bound method DataFrame.drop_duplicates of    Visitor_ID                        Name   Age  Ticket_Price Check_In_Time  \\\n",
+       "0       V1000         MAYUR UTTAM BUCHKUL  25.0         500.0      10:00 AM   \n",
+       "1       V1001        ARNAV AJAY DESHPANDE  23.0         750.0      10:30 AM   \n",
+       "2       V1002  ASHWINI LALCHAND MUNDAWARE  22.0         500.0      11:00 AM   \n",
+       "3       V1003      GAYATRI SURESH GAIKWAD   NaN        1000.0      11:30 AM   \n",
+       "4       V1004   HARSHADA GANESH CHAUDHARI  21.0           NaN           NaN   \n",
+       "5       V1005    VAIBHAVI HARISHWAR PATIL  25.0         500.0      10:00 AM   \n",
+       "6       V1006                         NaN  24.0         700.0      12:00 PM   \n",
+       "7       V1007     VISHAKHA PUNDLIK JADHAV  24.0         650.0      12:30 PM   \n",
+       "8       V1008         YASH BHARAT SOLUNKE  28.0         750.0      01:00 PM   \n",
+       "9       V1009       VIVEK SANTOSH KHANDWE   NaN        1000.0      01:30 PM   \n",
+       "10      V1010     VISHAKHA PUNDLIK JADHAV  22.0         500.0      11:00 AM   \n",
+       "11      V1011          Tanushree chhanwal  23.0         800.0      02:00 PM   \n",
+       "12      V1012              Shruti jaiswal  25.0           NaN           NaN   \n",
+       "13      V1013            Shriyash Sulakhe  27.0         750.0      02:30 PM   \n",
+       "14      V1014         YASH BHARAT SOLUNKE  25.0         500.0      10:00 AM   \n",
+       "15      V1015                         NaN  30.0         700.0      12:00 PM   \n",
+       "16      V1016        ARNAV AJAY DESHPANDE  31.0         900.0      03:00 PM   \n",
+       "17      V1017        RUTUJA SANTOSH THOTE  26.0         850.0      03:30 PM   \n",
+       "18      V1018          ROHIT DILIP BILWAL  19.0         750.0      04:00 PM   \n",
+       "19      V1019      RITESH SHIVAJI BAIRAGI  19.0           NaN           NaN   \n",
+       "\n",
+       "          City           State  \n",
+       "0        Delhi           Delhi  \n",
+       "1   Aurangabad      Maharastra  \n",
+       "2       Mumbai      Maharastra  \n",
+       "3       Bombay      Maharastra  \n",
+       "4    New Delhi           Delhi  \n",
+       "5          NDL           Delhi  \n",
+       "6      Chennai       Tamilnadu  \n",
+       "7       Chenai       Tamilnadu  \n",
+       "8     Chennaai       Tamilnadu  \n",
+       "9    Bangalore       Karnataka  \n",
+       "10       Delhi           Delhi  \n",
+       "11        Pune      Maharastra  \n",
+       "12   New Delhi           Delhi  \n",
+       "13      Bombay      Maharastra  \n",
+       "14   New Delhi           Delhi  \n",
+       "15         NDL           Delhi  \n",
+       "16      Indore  Madhya Pradesh  \n",
+       "17   Bangalore       Karnataka  \n",
+       "18      Ujjain  Madhya Pradesh  \n",
+       "19   Bangalore       Karnataka  >"
+      ]
+     },
+     "execution_count": 53,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#point 9\n",
+    "dframe.drop_duplicates"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 55,
+   "id": "df24dd75-4fd8-4655-9ee6-ba19cc4935f0",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<BarContainer object of 5 artists>"
+      ]
+     },
+     "execution_count": 55,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAq0AAAGsCAYAAAD36J6TAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjkuMiwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy8hTgPZAAAACXBIWXMAAA9hAAAPYQGoP6dpAAA3FElEQVR4nO3dfVhUdf7/8dcIgtynqEwokiaZhrfYsmKlqWB5X61Smjer61aaRWqWl1qaK96U0o2tlaWY1WpZumY3q3nDqpR3ieVdbmVqK3zZikCKQPHz+8PL+TWggDrIJ3o+rmuuyznnPed8znzOOfPiM2eODmOMEQAAAGCxGlXdAAAAAKA8hFYAAABYj9AKAAAA6xFaAQAAYD1CKwAAAKxHaAUAAID1CK0AAACwnndVN6CynD59WsePH1dQUJAcDkdVNwcAAAAlGGN04sQJhYeHq0aNssdSq21oPX78uCIiIqq6GQAAACjHsWPH1LBhwzJrqm1oDQoKknTmTQgODq7i1gAAAKCkvLw8RUREuHJbWaptaD17SUBwcDChFQAAwGIVuZSTH2IBAADAeoRWAAAAWI/QCgAAAOsRWgEAAGA9QisAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYL0LDq3//ve/1bt3b4WHh8vhcGjVqlVu840xmjp1qsLDw+Xn56fOnTtr3759bjWFhYUaM2aM6tatq4CAAPXp00fffvutW01OTo4GDx6skJAQhYSEaPDgwfrxxx8veAMBAADw23fBofWnn35S69atNX/+/HPOnzNnjubNm6f58+drx44dcjqdio+P14kTJ1w1SUlJWrlypZYtW6YtW7YoPz9fvXr1UnFxsatm4MCBysjI0IcffqgPP/xQGRkZGjx48EVsIgAAAH7rHMYYc9Evdji0cuVK9evXT9KZUdbw8HAlJSXpkUcekXRmVDUsLEyzZ8/WPffco9zcXNWrV09Lly5VYmKiJOn48eOKiIjQ+++/r+7du+vAgQNq0aKFPvnkE8XGxkqSPvnkE3Xo0EEHDx5Us2bNym1bXl6eQkJClJubq+Dg4IvdRAAAAFSSC8lrHr2m9fDhw8rKylJCQoJrmq+vrzp16qT09HRJ0q5du3Ty5Em3mvDwcEVHR7tqPv74Y4WEhLgCqyT98Y9/VEhIiKumpMLCQuXl5bk9AAAAUD14e3JhWVlZkqSwsDC36WFhYTpy5IirxsfHR7Vr1y5Vc/b1WVlZql+/fqnl169f31VT0syZMzVt2rRL3gYAwG+Uw1HVLfh9uvgvbIELUil3D3CUOHEYY0pNK6lkzbnqy1rOxIkTlZub63ocO3bsIloOAAAAG3k0tDqdTkkqNRqanZ3tGn11Op0qKipSTk5OmTX/93//V2r5//vf/0qN4p7l6+ur4OBgtwcAAACqB4+G1saNG8vpdGrdunWuaUVFRUpLS1NcXJwkKSYmRjVr1nSryczM1N69e101HTp0UG5urrZv3+6q2bZtm3Jzc101AAAA+P244Gta8/Pz9eWXX7qeHz58WBkZGapTp44aNWqkpKQkJScnKyoqSlFRUUpOTpa/v78GDhwoSQoJCdGIESM0btw4hYaGqk6dOho/frxatmypbt26SZKaN2+uW265RSNHjtSLL74oSfrrX/+qXr16VejOAQAAAKheLji07ty5UzfffLPr+dixYyVJQ4cOVWpqqiZMmKCCggKNGjVKOTk5io2N1dq1axUUFOR6TUpKiry9vTVgwAAVFBSoa9euSk1NlZeXl6vm9ddf1wMPPOC6y0CfPn3Oe29YAAAAVG+XdJ9Wm3GfVgD4neHuAVWjesYIXCZVdp9WAAAAoDIQWgEAAGA9QisAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYD1CKwAAAKxHaAUAAID1CK0AAACwHqEVAAAA1iO0AgAAwHqEVgAAAFiP0AoAAADrEVoBAABgPUIrAAAArEdoBQAAgPUIrQAAALAeoRUAAADWI7QCAADAeoRWAAAAWI/QCgAAAOsRWgEAAGA9QisAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYD1CKwAAAKxHaAUAAID1CK0AAACwHqEVAAAA1iO0AgAAwHqEVgAAAFiP0AoAAADrEVoBAABgPUIrAAAArEdoBQAAgPUIrQAAALAeoRUAAADWI7QCAADAeoRWAAAAWI/QCgAAAOsRWgEAAGA9QisAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYD1CKwAAAKxHaAUAAID1CK0AAACwHqEVAAAA1vN4aD116pQmT56sxo0by8/PT02aNNETTzyh06dPu2qMMZo6darCw8Pl5+enzp07a9++fW7LKSws1JgxY1S3bl0FBASoT58++vbbbz3dXAAAAPwGeDy0zp49Wy+88ILmz5+vAwcOaM6cOXryySf13HPPuWrmzJmjefPmaf78+dqxY4ecTqfi4+N14sQJV01SUpJWrlypZcuWacuWLcrPz1evXr1UXFzs6SYDAADAcg5jjPHkAnv16qWwsDC98sorrml33HGH/P39tXTpUhljFB4erqSkJD3yyCOSzoyqhoWFafbs2brnnnuUm5urevXqaenSpUpMTJQkHT9+XBEREXr//ffVvXv3ctuRl5enkJAQ5ebmKjg42JObCACwkcNR1S34ffJsjMDvzIXkNY+PtN5www1av369Dh06JEnas2ePtmzZoh49ekiSDh8+rKysLCUkJLhe4+vrq06dOik9PV2StGvXLp08edKtJjw8XNHR0a6akgoLC5WXl+f2AAAAQPXg7ekFPvLII8rNzdW1114rLy8vFRcXa8aMGbrrrrskSVlZWZKksLAwt9eFhYXpyJEjrhofHx/Vrl27VM3Z15c0c+ZMTZs2zdObAwAAqgqj51XD0tFzj4+0Ll++XK+99preeOMNffrpp1qyZImeeuopLVmyxK3OUWJHNMaUmlZSWTUTJ05Ubm6u63Hs2LFL2xAAAABYw+MjrQ8//LAeffRR3XnnnZKkli1b6siRI5o5c6aGDh0qp9Mp6cxo6pVXXul6XXZ2tmv01el0qqioSDk5OW6jrdnZ2YqLizvnen19feXr6+vpzQEAAIAFPD7S+vPPP6tGDffFenl5uW551bhxYzmdTq1bt841v6ioSGlpaa5AGhMTo5o1a7rVZGZmau/evecNrQAAAKi+PD7S2rt3b82YMUONGjXSddddp927d2vevHkaPny4pDOXBSQlJSk5OVlRUVGKiopScnKy/P39NXDgQElSSEiIRowYoXHjxik0NFR16tTR+PHj1bJlS3Xr1s3TTQYAAIDlPB5an3vuOU2ZMkWjRo1Sdna2wsPDdc899+ixxx5z1UyYMEEFBQUaNWqUcnJyFBsbq7Vr1yooKMhVk5KSIm9vbw0YMEAFBQXq2rWrUlNT5eXl5ekmAwAAwHIev0+rLbhPKwD8zvBL86pRmTGCPq0alzEaVul9WgEAAABPI7QCAADAeoRWAAAAWI/QCgAAAOsRWgEAAGA9QisAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYD1CKwAAAKxHaAUAAID1CK0AAACwHqEVAAAA1iO0AgAAwHqEVgAAAFiP0AoAAADrEVoBAABgPUIrAAAArEdoBQAAgPUIrQAAALAeoRUAAADWI7QCAADAeoRWAAAAWI/QCgAAAOsRWgEAAGA9QisAAACs513VDQCs53BUdQt+n4yp6hYAACzCSCsAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYD1CKwAAAKxHaAUAAID1CK0AAACwHqEVAAAA1iO0AgAAwHqEVgAAAFiP0AoAAADrEVoBAABgPUIrAAAArEdoBQAAgPUIrQAAALAeoRUAAADWI7QCAADAeoRWAAAAWI/QCgAAAOsRWgEAAGA9QisAAACsR2gFAACA9QitAAAAsB6hFQAAANYjtAIAAMB6hFYAAABYj9AKAAAA6xFaAQAAYL1KCa3//e9/dffddys0NFT+/v5q06aNdu3a5ZpvjNHUqVMVHh4uPz8/de7cWfv27XNbRmFhocaMGaO6desqICBAffr00bffflsZzQUAAIDlPB5ac3Jy1LFjR9WsWVMffPCB9u/fr7lz5+qKK65w1cyZM0fz5s3T/PnztWPHDjmdTsXHx+vEiROumqSkJK1cuVLLli3Tli1blJ+fr169eqm4uNjTTQYAAIDlHMYY48kFPvroo9q6das2b958zvnGGIWHhyspKUmPPPKIpDOjqmFhYZo9e7buuece5ebmql69elq6dKkSExMlScePH1dERITef/99de/evdRyCwsLVVhY6Hqel5eniIgI5ebmKjg42JObiN8bh6OqW/D75NlTE34POFarRmUeq/Rp1biM59+8vDyFhIRUKK95fKR19erVat++vfr376/69eurbdu2WrhwoWv+4cOHlZWVpYSEBNc0X19fderUSenp6ZKkXbt26eTJk2414eHhio6OdtWUNHPmTIWEhLgeERERnt40ANWFw8GjKh4AcAk8Hlq//vprLViwQFFRUfrXv/6le++9Vw888IBeffVVSVJWVpYkKSwszO11YWFhrnlZWVny8fFR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1qyZ7r77bi1evPicX9dOmDBBM2fO1IEDB9SqVasLWsczzzyjDh06aOTIkcrMzFRmZqYiIiJK1dWrV081atTQihUrVFxcfEHrmDRpkubOnaudO3fK29tbw4cPd817/fXXNWPGDM2ePVu7du1So0aNtGDBglLL2Lhxo7766itt3LhRS5YsUWpq6mX9yicwMFCBgYFatWqVCgsLy6ydNm2aBgwYoM8++0w9evTQoEGDSo3CleyzyZMna/HixVqwYIH27dunhx56SHfffbfS0tLkcDg0fPjwUqM3ixYt0o033qirr75aklSjRg09++yz2rt3r5YsWaINGza4RhvOZe3atfr+++/LrCk5EldWX65cuVIPPvigxo0bp7179+qee+7Rn//8Z23cuFHSma/tUlJS9OKLL+o///mPVq1apZYtW7otf+7cuWrfvr12796tUaNG6b777tPBgwdd84OCgpSamqr9+/frmWee0cKFC5WSknLe9ntaRfYDY4z69eunH374QWlpaVq3bp2++uorJSYmutV99dVXWrVqldasWaM1a9YoLS3tnF8rX4xZs2bp7bff1o4dOypUv3XrVt1777168MEHlZGRofj4eM2YMcOtJj8/Xz169NBHH32k3bt3q3v37urdu3epb4BSUlLUsWNH7d69Wz179tTgwYM1ZMgQ3X333fr000/VtGlTDRky5LJdelLWcREXF6enn35awcHBrvPf+PHjJZ0ZOZo+fbr27NmjVatW6fDhwxo2bFi56/Px8dGgQYPcjtfU1FS3Y+Wsiq7jUs+hCxcu1KRJkzRjxgwdOHBAycnJmjJlipYsWSJJevbZZ7V69Wq9+eab+uKLL/Taa6/pqquucltGRc5rkpSbm6uEhAQVFRVp/fr1qlOnjn755RfFxMRozZo12rt3r/76179q8ODB2rZtm9trlyxZIm9vb23dulUvvvhiue/1WY8++qimT5+uNWvW6I477jhvXWZmpu666y4NHz5cBw4c0KZNm3T77be77YvlfdYMGzZMO3fu1OrVq/Xxxx/LGKMePXro5MmTrpqff/5ZM2fO1Msvv6x9+/apfv36+vOf/6ytW7dq2bJl+uyzz9S/f3/dcsst+s9//lPmtuXn56tnz57at2+ftm7dqubNm1f4fTnrQo/Jyu6vSleVifn3LC4uzjz99NPGGGNOnjxp6tat6zaycfav21WrVrm97kJGWo05919r5zJ//nzj7+9vgoKCzM0332yeeOIJ89VXX7nmlzXSetZ7771nJJmCggJjjDGxsbFm9OjRbuvp2LFjqfZGRkaaU6dOuab179/fJCYmlttmT1qxYoWpXbu2qVWrlomLizMTJ040e/bscauRZCZPnux6np+fbxwOh/nggw+MMefus/z8fFOrVi2Tnp7utqwRI0aYu+66yxhjzPHjx42Xl5fZtm2bMcaYoqIiU69ePZOamnre9r755psmNDT0vPNnzZplJJkffvjBNW379u0mICDA9Xj33Xfd2l1WX8bFxZmRI0e6raN///6mR48expgzI17XXHPNeUfIIyMjzd133+16fvr0aVO/fn2zYMGC827DnDlzTExMjOt5ZY+0GlP+frB27Vrj5eVljh496pq2b98+I8ls377d1U5/f3+3kdWHH37YxMbGup5fykirMcbceeedpkuXLsaY8kdaExMTTc+ePd2WNWjQILeR1nNp0aKFee6559za/Os+zMzMNJLMlClTXNM+/vhjI8lkZmaWueyKKm+ktaSSx8XZkbHybN++3Ugq89uLs+fSPXv2mKCgIJOfn2/S0tJM/fr1TVFRUbn9V3IdnjqHRkRElBopmz59uunQoYMxxpgxY8aYLl26uL5ZKami57WDBw+a1q1bm9tvv90UFhaedzuNMaZHjx5m3LhxruedOnUybdq0KfM1JQ0dOtT4+PgYSWb9+vXnrTm7f+zatavMbwzL+6w5dOiQkWS2bt3qmv/dd98ZPz8/8+abbxpjzuxPkkxGRoar5ssvvzQOh8P897//dVtf165dzcSJE8+7fZGRkcbHx8eEhoaec5S/oiOtnjgmPdFflwsjrVXgiy++0Pbt23XnnXdKkry9vZWYmKhFixaVqm3fvv1ladPo0aOVlZWl1157TR06dNBbb72l6667TuvWrSvzdb8e/T17TVd2drakM9v5hz/8wa2+5HNJuu666+Tl5eW2nLPLuFzuuOMOHT9+XKtXr1b37t21adMmtWvXrtSI76+3NyAgQEFBQaXa+us+279/v3755RfFx8e7RvICAwP16quv6quvvpJ0Znt79uzp6v81a9bol19+Uf/+/V3L2bhxo+Lj49WgQQMFBQVpyJAh+v777/XTTz9VeBtbtWqljIwMZWRk6Keffip1vW1ZfXngwAF17NjRrb5jx446cOCAJKl///4qKChQkyZNNHLkSK1cubLM5TscDjmdTrf3bsWKFbrhhhvkdDoVGBioKVOmlHutt6eVtx8cOHBAERERbt9YtGjRQldccYXrvZDO/MgiKCjI9dzT+/Tf/vY3bd68WWvXri23tiLH4U8//aQJEya4tiUwMFAHDx4s9f7/ug/DwsIkyW1E/ey0y3X8XuxxsXv3bvXt21eRkZEKCgpS586dJalC+1urVq0UFRWlFStWaNGiRRo8eLBq1qx50eu4lHPo//73Px07dkwjRoxwO7/87W9/c51fhg0bpoyMDDVr1kwPPPDAOfeZipzXunXrpiZNmujNN9+Uj4+Pa3pxcbFmzJihVq1aKTQ0VIGBgVq7dm2p7byYz7JWrVrpqquu0mOPPaYTJ06UWdu6dWt17dpVLVu2VP/+/bVw4ULl5OS41ZT1WXPgwAF5e3srNjbWNT80NFTNmjVzO7Z9fHzc3q9PP/1Uxhhdc801bn2Qlpbm6oPzSUhI0E8//aTk5OTy34zzuNBjsjL763IgtFaBV155RadOnVKDBg3k7e0tb29vLViwQO+8806pgywgIOCytSsoKEh9+vTRjBkztGfPHt14443629/+VuZrfn2yPvt1868vTC/5FbQ5x9eGJU/4DofDIxe3X6hatWopPj5ejz32mNLT0zVs2DA9/vjjbjUVaeuv++zsvPfee88VGDMyMrR//36tWLHCVfeXv/xFy5YtU0FBgRYvXqzExET5+/tLko4cOaIePXooOjpab7/9tnbt2qXnn39ekty+tvq1qKgoSWc+9M7y9fVV06ZN1bRp03O+5mL68uy0iIgIffHFF3r++efl5+enUaNG6aabbnJrX1nv3SeffKI777xTt956q9asWaPdu3dr0qRJVfIDgLL2g19v86+VnF7eflKjRo1Sx8L5+vJcrr76ao0cOVKPPvpouV/Fn6vNJV/z8MMP6+2339aMGTO0efNmZWRkqGXLlqXe/3PtI+XtN5XlYo4L6UxAT0hIUGBgoF577TXt2LFDK1eulFTxH5wMHz5czz//vFasWHHOSwMuZB2Xcg49W7dw4UK388vevXv1ySefSJLatWunw4cPa/r06SooKNCAAQP0pz/96bxtOLvOkn3Ys2dPbd68Wfv373ebPnfuXKWkpGjChAnasGGDMjIy1L1791LbeTGfZQ0aNFBaWpoyMzN1yy23lBlcvby8tG7dOn3wwQdq0aKFnnvuOTVr1kyHDx+u0Hae7zgqefz4+fm5PT99+rS8vLy0a9cutz44cOCAnnnmmTK3r2vXrlq9erVeeukljRkzxm1eRc8RF3pMVmZ/XQ6E1svs1KlTevXVVzV37ly3HXzPnj2KjIzU66+/7tH1+fj4XPB1qtKZHf3aa6+9oJG8kpo1a6bt27e7Tdu5c+dFL+9ya9GixSVt/9ll+Pr66ujRo67AePbx69G6Hj16KCAgQAsWLNAHH3zg9kG4c+dOnTp1SnPnztUf//hHXXPNNTp+/HiZ601ISFCdOnU0e/bsS2r/Wc2bN9eWLVvcpqWnp7tdg+Xn56c+ffro2Wef1aZNm/Txxx/r888/r9Dyt27dqsjISE2aNEnt27dXVFSUjhw54pG2X6pf7wctWrTQ0aNHdezYMdf8/fv3Kzc394KuR6tXr54yMzNdz/Py8tw+XCviscce06FDh7Rs2bIy66699tpyj8PNmzdr2LBhuu2229SyZUs5nU7XLbRsVZHj4lznv4MHD+q7777TrFmzdOONN+raa6+94JHhgQMH6vPPP1d0dLRatGhRar4n1iGVfw4NCwtTgwYN9PXXX5c6vzRu3NhVFxwcrMTERC1cuFDLly/X22+/fcF3xJg1a5aGDh2qrl27ugXXzZs3q2/fvrr77rvVunVrNWnSpNxrOS9Eo0aNlJaWpuzsbCUkJCgvL++8tQ6HQx07dtS0adO0e/du+fj4uP5YKE+LFi106tQpt2s7v//+ex06dKjMY7tt27YqLi5WdnZ2qT5wOp3lrjc+Pl5r1qzRokWLNHr0aFdQLXmOKC4u1t69eyu0LWWp7P6qbNXz/kUWW7NmjXJycjRixIhS91H805/+pFdeeUX333+/x9Z31VVXadu2bfrmm28UGBioOnXqqEYN979VMjIy9Pjjj2vw4MFq0aKFfHx8lJaWpkWLFumRRx656HWPGTNGI0eOVPv27RUXF6fly5frs88+U5MmTS51szzq+++/V//+/TV8+HC1atVKQUFB2rlzp+bMmaO+ffte0rKDgoI0fvx4PfTQQzp9+rRuuOEG5eXlKT09XYGBgRo6dKikM6MEw4YN08SJE9W0aVN16NDBtYyrr75ap06d0nPPPafevXtr69ateuGFF8pcb2BgoF5++WUlJiaqZ8+eeuCBBxQVFaX8/Hx9+OGHrnVW1MMPP6wBAwaoXbt26tq1q95991298847+uijjySd+TFKcXGxYmNj5e/vr6VLl8rPz0+RkZEVWn7Tpk119OhRLVu2TNdff73ee++9Cn/YeEpF9oNu3bqpVatWGjRokJ5++mmdOnVKo0aNUqdOnS7o67QuXbooNTVVvXv3Vu3atTVlypQL6g/pTGAZO3asnnzyyTLrxowZo5tuuknz5s1T7969tWHDBn3wwQduo0VNmzbVO++8o969e8vhcGjKlClV8m3HueTm5pb6T03q1KlToePiqquuUn5+vtavX6/WrVvL399fjRo1ko+Pj5577jnde++92rt3r6ZPn35Bbapdu7YyMzPPeVmAJI+sQ6rYOXTq1Kl64IEHFBwcrFtvvVWFhYXauXOncnJyNHbsWKWkpOjKK69UmzZtVKNGDb311ltyOp0Xdauop556SsXFxerSpYs2bdqka6+9Vk2bNtXbb7+t9PR01a5dW/PmzVNWVtZF/ajofBo2bKhNmzbp5ptvVkJCgv71r3+V+vzctm2b1q9fr4SEBNWvX1/btm3T//73vwq3IyoqSn379tXIkSP14osvKigoSI8++qgaNGhQ5ufANddco0GDBmnIkCGaO3eu2rZtq++++04bNmxQy5Yt1aNHj3LX3aVLF7333nvq1auXjDF6/vnn1aVLF40dO1bvvfeerr76aqWkpHjkP3i4HP1VmRhpvcxeeeUVdevW7Zw3/r7jjjuUkZGhTz/91GPrGz9+vLy8vNSiRQvVq1fvnNdsNWzYUFdddZWmTZum2NhYtWvXTs8884ymTZumSZMmXfS6Bw0apIkTJ2r8+PGur6iGDRumWrVqXcomeVxgYKBiY2OVkpKim266SdHR0ZoyZYpGjhyp+fPnX/Lyp0+frscee0wzZ85U8+bN1b17d7377rtuIyGSNGLECBUVFZX6urFNmzaaN2+eZs+erejoaL3++uuaOXNmueu97bbblJ6eLn9/fw0ZMkTNmjVTly5dtGHDBi1btky9evWq8Db069dPzzzzjJ588kldd911evHFF7V48WLXdXpXXHGFFi5cqI4dO6pVq1Zav3693n33Xbd7CJelb9++euihh3T//ferTZs2Sk9P15QpUyrcPk+oyH5w9n8Pql27tm666SbXdX7Lly+/oHVNnDhRN910k3r16qUePXqoX79+rjtFXIiHH35YgYGBZdZ07NhRL7zwgubNm6fWrVvrww8/1EMPPeR2HKakpKh27dqKi4tT79691b17d7Vr1+6C21MZNm3apLZt27o9HnvssQodF3Fxcbr33nuVmJioevXqac6cOapXr55SU1P11ltvqUWLFpo1a5aeeuqpC27XFVdccd6vUD21joqcQ//yl7/o5ZdfVmpqqlq2bKlOnTopNTXVdX4JDAzU7Nmz1b59e11//fX65ptv9P7775cavKiolJQUDRgwQF26dNGhQ4c0ZcoUtWvXTt27d1fnzp3ldDor5X+eOnupwI8//qj4+PhSAS44OFj//ve/1aNHD11zzTWaPHmy5s6dq1tvvbXC61i8eLFiYmLUq1cvdejQQcYYvf/+++f94+TXrxsyZIjGjRunZs2aqU+fPtq2bds579ZzPp07d9b777+vpUuX6r777tPw4cM1dOhQDRkyRJ06dVLjxo118803V3h553O5+quyOEx5F0TBahMnTtTmzZtLfXVrq/j4eDmdTi1durSqm2KdrVu3qnPnzvr2229dF88DlWHkyJE6ePCgNm/eXNVNwQXiHIrfMy4P+I0yxujrr7/W+vXr1bZt26puzjn9/PPPeuGFF9S9e3d5eXnpH//4hz766KNy70jwe1NYWKhjx45pypQpGjBgAIEVHvfUU08pPj5eAQEB+uCDD7RkyRL9/e9/r+pmoRycQwF3jLT+Rv34448KCwvT9ddfr9dff73C1w5eTgUFBerdu7c+/fRTFRYWqlmzZpo8ebJuv/32qm6aVVJTUzVixAi1adNGq1evVoMGDaq6SahmBgwYoE2bNunEiRNq0qSJxowZo3vvvbeqm4VycA4F3BFaAQAAYD1+iAUAAADrEVoBAABgPUIrAAAArEdoBQAAgPUIrQAAALAeoRUAAADWI7QCAADAeoRWAAAAWO//AXKqKpwkEB0qAAAAAElFTkSuQmCC",
+      "text/plain": [
+       "<Figure size 800x500 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "#point10\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "data = {\n",
+    "    'Singer': ['Arijit Singh', 'Shreya Ghoshal', 'Sonu Nigam', 'Lata Mangeshkar', 'Kishore Kumar'],\n",
+    "    'Years_Active': [15, 20, 30, 70, 40],\n",
+    "    'Number_of_Songs': [500, 700, 600, 1000, 800],\n",
+    "    'Awards_Won': [50, 60, 40, 100, 80]\n",
+    "}\n",
+    "df = pd.DataFrame(data)\n",
+    "plt.figure(figsize=(8, 5))\n",
+    "plt.bar(df['Singer'], df['Number_of_Songs'], color='red')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "872e2470-a282-40f6-a8f0-f5a5cfb6eb1f",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [conda env:base] *",
+   "language": "python",
+   "name": "conda-base-py"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
